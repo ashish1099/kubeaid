@@ -445,8 +445,7 @@ function update_helm_chart {
 function main (){
   # Generate a unique branch name
   GIT_BRANCH_NAME="Helm_Update"_$(date +"%Y%m%d")_$(echo $RANDOM | base64)
-  COMMIT_MSG_FILE=$(mktemp)
-
+  COMMIT_MSG_FILE="./release-notes.md"
 
   if [ -n "$UPDATE_HELM_CHART" ]; then
     if [ "$ACTIONS" = false ]; then
@@ -490,7 +489,7 @@ function main (){
 
     # Generate commit message
     {
-      echo "chore: update helm charts to v$NEW_VERSION"
+      echo "chore: Updated KubeAid managed helm charts"
       echo ""
 
       if [ ${#MAJOR_UPDATES[@]} -gt 0 ]; then

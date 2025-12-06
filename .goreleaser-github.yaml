@@ -1,12 +1,8 @@
 ---
 version: 2
 
-before:
-  hooks:
-    - bash bin/helm-repo-update.sh
-
 changelog:
-  use: github
+  use: github-native
   sort: asc
   format: "[{{ .SHA }}](https://github.com/obmondo/kubeaid/commit/{{ .SHA }}) {{ .Message }}{{ with .AuthorUsername }} (@{{ . }}){{ end }}"
   abbrev: 7
@@ -44,13 +40,17 @@ builds:
 
 release:
   github:
-    owner: ashish
+    owner: ashish1099
     name: kubeaid
   prerelease: auto
   make_latest: true
+  name_template: "{{ .Tag }}"
   header: |
     ## Release {{ .Tag }}
 
-    This release includes automated Helm chart updates.
+    This release includes automated Helm chart updates. The KubeAid version follows semantic versioning based on the highest version change in any Helm chart:
+    - **Major bump**: If any chart has a major version change
+    - **Minor bump**: If any chart has a minor version change (and no major changes)
+    - **Patch bump**: If only patch version changes are present
   footer: |
     **Full Changelog**: https://github.com/obmondo/kubeaid/compare/{{ .PreviousTag }}...{{ .Tag }}
