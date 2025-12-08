@@ -3,12 +3,3 @@ version: 2
 
 builds:
   - skip: true
-
-release:
-  header: |
-    ## Release {{ .Tag }}
-
-    This release includes automated Helm chart updates. The KubeAid version follows semantic versioning based on the highest version change in any Helm chart:
-    - **Major bump**: If any chart has a major version change
-    - **Minor bump**: If any chart has a minor version change (and no major changes)
-    - **Patch bump**: If only patch version changes are present

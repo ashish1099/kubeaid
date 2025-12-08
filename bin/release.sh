@@ -27,7 +27,7 @@ declare -a CONFIG_CHANGES
 declare -a OTHER_CHANGES
 
 get_updates() {
-  sed -n "/### ${1} Version Upgrades/,/^$/p" $RELEASE_NOTES_FILE | grep '^-' | sed "s/^- /- ($short_hash) /"
+  git log --format='%B' -n 1 "$short_hash" | sed -n "/### ${1} Version Upgrades/,/^$/p" | grep '^-' | sed "s/^- /- ($short_hash) /"
 }
 
 # Process commits
@@ -48,7 +48,7 @@ while IFS= read -r commit; do
       PATCH_CHART_UPDATES=$(get_updates 'Patch' "$short_hash")
     fi
 
-    formatted_message="- ($short_hash) $message"
+    formatted_message="- $short_hash $message"
 
     # Categorize commits
     if [[ $message =~ ^feat ]]; then
@@ -62,13 +62,16 @@ while IFS= read -r commit; do
     fi
 done < <(git rev-list "$COMMIT_RANGE")
 
-TOTAL_CHART_UPDATES="$(cat $RELEASE_NOTES_FILE | grep -c Updated)"
+function get_total_chart_updates() {
+  git log --format='%B' -n 1 "$short_hash" | grep -c Update
+}
 
-cp $CHANGELOG_FILE $CHANGELOG_FILE.tmp
+TOTAL_CHART_UPDATES=get_total_chart_updates
+
+cat $CHANGELOG_FILE | tail -n +5 > $CHANGELOG_FILE.tmp
 
 # Generate release notes file
 {
-
   printf '%s\n' "## KubeAid Release Version ${NEW_TAG}"
   echo ""
 
@@ -119,9 +122,21 @@ cp $CHANGELOG_FILE $CHANGELOG_FILE.tmp
    if [ $total -eq 0 ]; then
        echo "No changes in this release."
    fi
-} > "$CHANGELOG_FILE" && cat "$CHANGELOG_FILE.tmp" >> "$CHANGELOG_FILE"
+} > "$RELEASE_NOTES_FILE"
+
+{
+  printf '%s\n' "# Changelog"
+  echo ""
+  printf '%s\n' "All releases and the changes included in them (pulled from git commits added since last release) will be detailed in this file."
+  echo ""
+} > "$CHANGELOG_FILE"
+
+
+# Prepend the new release note in the changelog.md file
+cat "$RELEASE_NOTES_FILE" "$CHANGELOG_FILE.tmp" >> "$CHANGELOG_FILE"
 
 echo "Release notes generated: $CHANGELOG_FILE"
+rm -fr $CHANGELOG_FILE.tmp
 
 # git tag -a "$NEW_TAG" -m "Kubeaid Release $NEW_TAG"
 # git push origin --tags

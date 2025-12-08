@@ -418,7 +418,7 @@ function update_helm_chart {
 
       update_type=$(get_update_type "$HELM_CHART_CURRENT_TAG_VERSION" "$HELM_CHART_NEW_VERSION")
 
-      local update_line="- Updated $HELM_CHART_NAME from version $HELM_CHART_CURRENT_VERSION to $HELM_CHART_NEW_VERSION"
+      local update_line="- chore: Update $HELM_CHART_NAME from version $HELM_CHART_CURRENT_VERSION to $HELM_CHART_NEW_VERSION"
 
       case $update_type in
         major)
@@ -445,7 +445,7 @@ function update_helm_chart {
 function main (){
   # Generate a unique branch name
   GIT_BRANCH_NAME="Helm_Update"_$(date +"%Y%m%d")_$(echo $RANDOM | base64)
-  COMMIT_MSG_FILE="./release-notes.md"
+  COMMIT_MSG_FILE=$(mktemp)
 
   if [ -n "$UPDATE_HELM_CHART" ]; then
     if [ "$ACTIONS" = false ]; then
@@ -489,7 +489,7 @@ function main (){
 
     # Generate commit message
     {
-      echo "chore: Updated KubeAid managed helm charts"
+      echo "chore: Update KubeAid managed helm charts"
       echo ""
 
       if [ ${#MAJOR_UPDATES[@]} -gt 0 ]; then

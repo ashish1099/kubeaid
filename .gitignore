@@ -1,5 +1,4 @@
 .python-version
-.release-notes.md
 *.swp
 *.tgz
 defaults
