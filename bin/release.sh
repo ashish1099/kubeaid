@@ -6,6 +6,8 @@ set -e
 
 CHANGELOG_FILE="CHANGELOG.md"
 RELEASE_NOTES_FILE=".release-notes.md"
+# Run this when the helm chart update PR is merged into master
+NEW_TAG=$(cat VERSION)
 
 # Get the previous tag
 PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
@@ -14,7 +16,7 @@ if [ -z "$PREVIOUS_TAG" ]; then
     echo "No previous tag found, using all commits"
     COMMIT_RANGE="HEAD"
 else
-    echo "Generating release notes since $PREVIOUS_TAG"
+    echo "Generating release notes since $PREVIOUS_TAG..$NEW_TAG"
     COMMIT_RANGE="$PREVIOUS_TAG..HEAD"
 fi
 
@@ -62,63 +64,65 @@ done < <(git rev-list "$COMMIT_RANGE")
 
 TOTAL_CHART_UPDATES="$(cat $RELEASE_NOTES_FILE | grep -c Updated)"
 
+cp $CHANGELOG_FILE $CHANGELOG_FILE.tmp
+
 # Generate release notes file
 {
-    if [ -n "$MAJOR_CHART_UPDATES" ]; then
-      echo "### Major Version Upgrades"
-      printf '%s\n' "${MAJOR_CHART_UPDATES}"
-      echo ""
-    fi
 
-    if [ -n "$MINOR_CHART_UPDATES" ]; then
-      echo "### Minor Version Upgrades"
-      printf '%s\n' "${MINOR_CHART_UPDATES}"
-      echo ""
-    fi
+  printf '%s\n' "## KubeAid Release Version ${NEW_TAG}"
+  echo ""
 
-    if [ -n "$PATCH_CHART_UPDATES" ]; then
-      echo "### Patch Version Upgrades"
-      printf '%s\n' "${PATCH_CHART_UPDATES}"
-      echo ""
-    fi
+   if [ -n "$MAJOR_CHART_UPDATES" ]; then
+     echo "### Major Version Upgrades"
+     printf '%s\n' "${MAJOR_CHART_UPDATES}"
+     echo ""
+   fi
 
-    if [ ${#FEATURES[@]} -gt 0 ]; then
-        echo "### Features"
-        printf '%s\n' "${FEATURES[@]}"
-        echo ""
-    fi
+   if [ -n "$MINOR_CHART_UPDATES" ]; then
+     echo "### Minor Version Upgrades"
+     printf '%s\n' "${MINOR_CHART_UPDATES}"
+     echo ""
+   fi
 
-    if [ ${#BUG_FIXES[@]} -gt 0 ]; then
-        echo "### Bug Fixes"
-        printf '%s\n' "${BUG_FIXES[@]}"
-        echo ""
-    fi
+   if [ -n "$PATCH_CHART_UPDATES" ]; then
+     echo "### Patch Version Upgrades"
+     printf '%s\n' "${PATCH_CHART_UPDATES}"
+     echo ""
+   fi
 
-    if [ ${#CONFIG_CHANGES[@]} -gt 0 ]; then
-        echo "### Configuration Changes"
-        printf '%s\n' "${CONFIG_CHANGES[@]}"
-        echo ""
-    fi
+   if [ ${#FEATURES[@]} -gt 0 ]; then
+       echo "### Features"
+       printf '%s\n' "${FEATURES[@]}"
+       echo ""
+   fi
 
-    if [ ${#OTHER_CHANGES[@]} -gt 0 ]; then
-        echo "### Other Changes"
-        printf '%s\n' "${OTHER_CHANGES[@]}"
-        echo ""
-    fi
+   if [ ${#BUG_FIXES[@]} -gt 0 ]; then
+       echo "### Bug Fixes"
+       printf '%s\n' "${BUG_FIXES[@]}"
+       echo ""
+   fi
 
-    # If no commits categorized, add a note
-    total=$((TOTAL_CHART_UPDATES + ${#FEATURES[@]} + ${#BUG_FIXES[@]} + ${#CONFIG_CHANGES[@]} + ${#OTHER_CHANGES[@]}))
-    if [ $total -eq 0 ]; then
-        echo "No changes in this release."
-    fi
-} > "$CHANGELOG_FILE.tmp" && mv "$CHANGELOG_FILE.tmp" "$CHANGELOG_FILE"
+   if [ ${#CONFIG_CHANGES[@]} -gt 0 ]; then
+       echo "### Configuration Changes"
+       printf '%s\n' "${CONFIG_CHANGES[@]}"
+       echo ""
+   fi
+
+   if [ ${#OTHER_CHANGES[@]} -gt 0 ]; then
+       echo "### Other Changes"
+       printf '%s\n' "${OTHER_CHANGES[@]}"
+       echo ""
+   fi
+
+   # If no commits categorized, add a note
+   total=$((TOTAL_CHART_UPDATES + ${#FEATURES[@]} + ${#BUG_FIXES[@]} + ${#CONFIG_CHANGES[@]} + ${#OTHER_CHANGES[@]}))
+   if [ $total -eq 0 ]; then
+       echo "No changes in this release."
+   fi
+} > "$CHANGELOG_FILE" && cat "$CHANGELOG_FILE.tmp" >> "$CHANGELOG_FILE"
 
 echo "Release notes generated: $CHANGELOG_FILE"
 
-# Run this when the helm chart update PR is merged into master
-
-NEW_TAG=$(cat VERSION)
-
-git tag -a "$NEW_TAG" -m "Kubeaid Release $NEW_TAG"
-git push origin --tags
-git push github --tags
+# git tag -a "$NEW_TAG" -m "Kubeaid Release $NEW_TAG"
+# git push origin --tags
+# git push github --tags
